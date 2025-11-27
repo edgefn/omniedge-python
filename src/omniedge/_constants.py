@@ -1,0 +1,5 @@
+BASE_URL="https://api-inference.modelscope.cn/v1/"
+OMNIEDGE_API_KEY="ms-f503201b-4003-4855-b60f-fa2ff2e4106e"
+SDK_NAME="OmniedgeSDK"
+SDK_VERSION="v0.0.1"
+PY_VERSION="3.11"
