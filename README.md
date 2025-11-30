@@ -10,10 +10,10 @@ Install:
 pip install omniedge
 ```
 
-Or from source:
+Or directly execute the CLI:
 
 ```bash
-pip install -e .
+uvx omniedge
 ```
 
 ### Configure Claude Code with OmniEdge
