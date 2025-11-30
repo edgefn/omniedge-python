@@ -1,5 +1,4 @@
-def main():
-    print("Hello from omniedge-python!")
+from omniedge.cli import main
 
 
 if __name__ == "__main__":

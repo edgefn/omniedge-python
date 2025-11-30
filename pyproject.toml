@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "omniedge"
-version = "0.1.0"
+version = "0.2.0"
 description = "The official Python library for the OmniEdge API"
 readme = "README.md"
 requires-python = ">=3.9.2"
@@ -29,5 +29,8 @@ Homepage = "https://github.com/edgefn/omniedge-python"
 Repository = "https://github.com/edgefn/omniedge-python"
 Issues = "https://github.com/edgefn/omniedge-python/issues"
 
+[project.scripts]
+omniedge = "omniedge.cli:main"
+
 [tool.setuptools]
-packages = ["omniedge"]
+packages = ["omniedge", "omniedge.tools"]
