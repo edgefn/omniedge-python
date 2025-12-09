@@ -15,7 +15,10 @@ __pycache__/
 
 
 # speakeasy 生成代码
-./src/omniedge/omniedge_core/
+
+#忽略 ./src/omniedge 目录下所有内容,除了omniedge_tools
+./src/omniedge/*
+!./src/omniedge/omniedge_tools
 
 
 # C extensions
