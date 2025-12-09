@@ -1,0 +1,19 @@
+#终端命令相关
+src/omniedge/cli.py
+src/omniedge/tools
+src/omniedge/terminal.py
+
+
+# 导入行为一致性
+src/omniedge/__init__.py
+src/omniedge/models.py
+src/omniedge/errors.py
+
+
+
+#告诉 Python 的类型检查工具，“这个包（Package）包含类型注解（Type Hints），请读取它们并为用户提供代码提示和错误检查。”
+src/omniedge/py.typed
+
+# 版本管理
+pyproject.toml
+README.md

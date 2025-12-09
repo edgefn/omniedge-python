@@ -1,7 +1,22 @@
+.venv/
+src/*.egg-info/
+**/__pycache__/
+.python-version
+.DS_Store
+pyrightconfig.json
+**/.speakeasy/temp/
+**/.speakeasy/logs/
+.speakeasy/reports
+.env.local
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
+
+
+# speakeasy 生成代码
+./src/omniedge/omniedge_core
+
 
 # C extensions
 *.so
