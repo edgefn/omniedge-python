@@ -29,7 +29,7 @@ jobs:
     # 使用 Speakeasy 官方封装好的 Action
     uses: speakeasy-api/sdk-generation-action/.github/workflows/workflow-executor.yaml@v15
     with:
-      speakeasy_version: v1.665.0
+      speakeasy_version: v1.668.0
       # 强制使用 PR 模式 (生成代码后提 PR，而不是直接推送到 main)
       mode: pr
 
