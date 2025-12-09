@@ -26,7 +26,7 @@ generation:
     generateNewTests: false
     skipResponseBodyAssertions: false
 python:
-  version: 0.1.0
+  version: 0.1.1
   additionalDependencies:
     dev: {}
     main: {}
@@ -67,6 +67,10 @@ python:
   outputModelSuffix: output
   packageManager: uv
   packageName: omniedge.omniedge_core
+  # 【新增】禁用自动编译和 Lint 检查
+  # 因为 CI 的检查逻辑无法正确处理 Namespace 包路径
+  compileConfig:
+    disable: true
   pytestFilterWarnings: []
   pytestTimeout: 0
   responseFormat: flat

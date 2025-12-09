@@ -26,38 +26,20 @@ on:
 
 jobs:
   generate:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Pre-check and create directories
-        run: |
-          echo "Checking directory structure..."
-          TARGET_DIR="src/omniedge/omniedge_core"
-          
-          if [ ! -d "$TARGET_DIR" ]; then
-            echo "Directory $TARGET_DIR does not exist."
-            echo "Creating directory..."
-            mkdir -p "$TARGET_DIR"
-          else
-            echo "Directory $TARGET_DIR exists."
-          fi
-          
-          # 验证创建结果
-          ls -R src/
-      - name: Generate SDK
-        # 使用 Speakeasy 官方封装好的 Action
-        uses: speakeasy-api/sdk-generation-action/.github/workflows/workflow-executor.yaml@v15
-        with:
-          speakeasy_version: v1.668.0
-          # 强制使用 PR 模式 (生成代码后提 PR，而不是直接推送到 main)
-          mode: pr
+    # 使用 Speakeasy 官方封装好的 Action
+    uses: speakeasy-api/sdk-generation-action/.github/workflows/workflow-executor.yaml@v15
+    with:
+      speakeasy_version: v1.668.0
+      # 强制使用 PR 模式 (生成代码后提 PR，而不是直接推送到 main)
+      mode: pr
 
-          secrets:
-            # 左边是固定的小写参数名 (对方规定的)
-            # 右边是你仓库里的 Secret (你存的)
+    secrets:
+      # 左边是固定的小写参数名 (对方规定的)
+      # 右边是你仓库里的 Secret (你存的)
 
-            # 如果你只是生成代码，用 GITHUB_TOKEN
-      #      github_access_token: ${{ secrets.GITHUB_TOKEN }}
-            # 如果你想让生成的 PR 自动触发测试，建议换成 ${{ secrets.MY_PAT_TOKEN }}
+      # 如果你只是生成代码，用 GITHUB_TOKEN
+#      github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      # 如果你想让生成的 PR 自动触发测试，建议换成 ${{ secrets.MY_PAT_TOKEN }}
 
-          github_access_token: ${{ secrets.MY_PAT_TOKEN}}
-          speakeasy_api_key: ${{ secrets.SPEAKEASY_API_KEY }}
+      github_access_token: ${{ secrets.MY_PAT_TOKEN}}
+      speakeasy_api_key: ${{ secrets.SPEAKEASY_API_KEY }}
