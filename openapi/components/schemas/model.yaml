@@ -1,0 +1,120 @@
+# Model listing response schemas
+
+ModelArchitecture:
+  type: object
+  properties:
+    input_modalities:
+      type: array
+      items:
+        type: string
+        enum: [text, image, audio]
+      description: "支持的输入模态"
+    output_modalities:
+      type: array
+      items:
+        type: string
+        enum: [text, image, audio]
+      description: "支持的输出模态"
+    tokenizer:
+      type: string
+      description: "分词器类型"
+    instruct_type:
+      type: string
+      description: "指令类型"
+
+ModelProvider:
+  type: object
+  properties:
+    is_moderated:
+      type: boolean
+      description: "是否启用内容审核"
+    context_length:
+      type: integer
+      description: "上下文长度限制"
+    max_completion_tokens:
+      type: integer
+      description: "最大完成令牌数"
+
+ModelPricing:
+  type: object
+  properties:
+    prompt:
+      type: string
+      description: "输入令牌价格 (USD)"
+    completion:
+      type: string
+      description: "输出令牌价格 (USD)"
+    image:
+      type: string
+      description: "图像处理价格"
+    request:
+      type: string
+      description: "请求基础价格"
+    web_search:
+      type: string
+      description: "网络搜索价格"
+    internal_reasoning:
+      type: string
+      description: "内部推理价格"
+    input_cache_read:
+      type: string
+      description: "输入缓存读取价格"
+    input_cache_write:
+      type: string
+      description: "输入缓存写入价格"
+
+Model:
+  type: object
+  required: [id, name, created]
+  properties:
+    id:
+      type: string
+      description: "模型唯一标识符"
+    name:
+      type: string
+      description: "模型显示名称"
+    created:
+      type: integer
+      description: "模型创建时间戳"
+    description:
+      type: string
+      description: "模型描述"
+    architecture:
+      $ref: '#/ModelArchitecture'
+    top_provider:
+      $ref: '#/ModelProvider'
+    pricing:
+      $ref: '#/ModelPricing'
+    canonical_slug:
+      type: string
+      description: "规范化的模型标识符"
+    context_length:
+      type: integer
+      description: "上下文长度限制"
+    hugging_face_id:
+      type: string
+      description: "Hugging Face模型ID"
+    per_request_limits:
+      type: object
+      description: "每请求限制"
+    supported_parameters:
+      type: array
+      items:
+        type: string
+      description: "支持的参数列表"
+    default_parameters:
+      type: object
+      description: "默认参数配置"
+
+ModelsResponse:
+  type: object
+  required: [data]
+  properties:
+    data:
+      type: array
+      items:
+        $ref: '#/Model'
+    object:
+      type: string
+      enum: [list]
+      description: "对象类型，固定为列表"

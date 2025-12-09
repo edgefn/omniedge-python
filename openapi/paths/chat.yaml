@@ -1,0 +1,121 @@
+post:
+  tags: ["Chat"]
+  operationId: create
+#  x-speakeasy-name-override: create
+  summary: 发起对话
+  description: |
+      创建一个聊天补全请求。
+      支持：多模型容灾、工具调用 (Function Calling)、JSON 模式、流式响应及用量统计。
+
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          # 引用 chat.yaml
+          $ref: "../components/schemas/chat.yaml#/CreateChatCompletionRequest"
+
+  responses:
+    # ✅ 200 OK
+    '200':
+
+      description: Success
+      headers:
+        X-Request-ID:
+          description: Unique request ID
+          schema: {type: string}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/chat.yaml#/ChatCompletionResponse'
+
+        # 情况 2: 流式响应 (stream=true)
+        # 必须添加 text/event-stream，Speakeasy 才会生成流式处理辅助代码
+        text/event-stream:
+          # x-speakeasy配置必须和 schema 平级，不能在 schema 里面
+          x-speakeasy-sse-sentinel: "[DONE]"
+
+          schema:
+            $ref: '../components/schemas/chat.yaml#/ChatCompletionStreamEvent'
+
+    # ❌ 400 Bad Request
+    '400':
+      description: Bad Request
+      headers:
+        X-Request-ID: {schema: {type: string}}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/BadRequestError'
+
+    # ❌ 401 Unauthorized
+    '401':
+      description: Unauthorized
+      headers:
+        X-Request-ID: {schema: {type: string}}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/AuthenticationError'
+
+    # ❌ 403 Forbidden
+    '403':
+      description: Forbidden
+      headers:
+        X-Request-ID: {schema: {type: string}}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/PermissionDeniedError'
+
+    # ❌ 404 Not Found
+    '404':
+      description: Not Found
+      headers:
+        X-Request-ID: {schema: {type: string}}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/NotFoundError'
+
+    # ❌ 429 Rate Limit (带重试)
+    '429':
+      description: Rate Limit Exceeded
+      headers:
+        X-Request-ID: {schema: {type: string}}
+        X-RateLimit-Reset: {schema: {type: integer}}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/RateLimitError'
+      # 🌟 Speakeasy 自动重试配置
+      x-speakeasy-retries:
+        strategy: backoff
+        backoff:
+            initialInterval: 500
+            maxInterval: 60000
+            exponent: 1.5
+        statusCodes: [ 429, 500, 502, 503, 504 ]
+
+
+    # ❌ 5XX Server Errors (带重试)
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/InternalServerError'
+
+    '502':
+      description: Bad Gateway
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/InternalServerError'
+
+    '503':
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/InternalServerError'

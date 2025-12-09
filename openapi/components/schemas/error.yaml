@@ -1,0 +1,77 @@
+# --- 基础错误内容结构 (内部使用) ---
+ErrorContent:
+  type: object
+  properties:
+    message:
+      type: string
+      description: 人类可读的错误信息
+    type:
+      type: string
+      description: 错误类型 (e.g. invalid_request_error)
+    code:
+      type: string
+      description: 错误码 (e.g. rate_limit_exceeded)
+    param:
+      type: string
+      description: 导致错误的参数
+    request_id:
+      type: string
+      description: 请求 ID，用于排查问题
+
+# --- 具体错误包装类 (生成 Python Exception) ---
+
+BadRequestError:
+  type: object
+  properties:
+    error:
+      $ref: '#/ErrorContent'
+  required: [error]
+  x-speakeasy-name-override: BadRequestError
+
+AuthenticationError:
+  type: object
+  properties:
+    error:
+      $ref: '#/ErrorContent'
+  required: [error]
+  x-speakeasy-name-override: AuthenticationError
+
+PermissionDeniedError:
+  type: object
+  properties:
+    error:
+      $ref: '#/ErrorContent'
+  required: [error]
+  x-speakeasy-name-override: PermissionDeniedError
+
+NotFoundError:
+  type: object
+  properties:
+    error:
+      $ref: '#/ErrorContent'
+  required: [error]
+  x-speakeasy-name-override: NotFoundError
+
+RateLimitError:
+  type: object
+  properties:
+    error:
+      $ref: '#/ErrorContent'
+  required: [error]
+  x-speakeasy-name-override: RateLimitError
+
+InternalServerError:
+  type: object
+  properties:
+    error:
+      $ref: '#/ErrorContent'
+  required: [error]
+  x-speakeasy-name-override: InternalServerError
+
+APIConnectionError:
+  type: object
+  properties:
+    error:
+      $ref: '#/ErrorContent'
+  required: [error]
+  x-speakeasy-name-override: APIConnectionError

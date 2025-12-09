@@ -1,0 +1,67 @@
+# 工作流名称：显示在 GitHub Actions 列表中的名字
+name: CD - Publish to PyPI
+
+# 1. 触发规则: GitHub 页面点击 "Publish release" 时才会触发
+on:
+  release:
+    types: [published]
+
+# 2. 任务定义 (Jobs)
+jobs:
+  pypi-publish:
+    name: Build and upload to PyPI
+    runs-on: ubuntu-latest
+
+    # 3. 权限设置 (Permissions)
+    # id-token: write 对于使用 PyPI "Trusted Publishing" (免 Token) 是必须的
+    # 即使你现在用 Token 登录，保留这个设置也是一种面向未来的最佳实践
+    permissions:
+      id-token: write  # 允许工作流请求 OIDC 令牌
+      contents: read   # 允许检出代码
+
+    steps:
+      # 步骤 1: 检出代码
+      # 获取当前 Release 对应的代码版本
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 步骤 2: 设置 Python 环境
+      # 建议使用与开发环境一致的稳定版本 (如 3.10)
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          # 开启 pip 缓存，加快第二次运行速度 (可选)
+          cache: "pip"
+
+      # 步骤 3: 安装构建工具
+      # 'build' 是 Python 官方推荐的打包工具，替代了旧的 'setup.py sdist bdist_wheel'
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      # 步骤 4: 执行打包 (Build)
+      # 这会根据 pyproject.toml 生成 .whl (二进制包) 和 .tar.gz (源码包)
+      # 产物会自动存放在 dist/ 目录下
+      - name: Build package
+        run: python -m build
+
+      # 步骤 5: 发布到 PyPI (Publish)
+      # 使用 PyPA 官方维护的 Action，安全且标准
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # 认证方式 A: 使用 Token (我们目前的做法)
+          # 对应你在 GitHub Secrets 里存的名字
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+          # 认证方式 B: Trusted Publishing (不需要 password)
+          # 如果你以后在 PyPI 后台配置了 GitHub 信任关系，可以删掉上面的 password 行
+
+          # 调试开关：如果在测试阶段想看详细日志，可以解开下面这行
+          # verbose: true
+
+          # 目标仓库：默认是正式 PyPI。
+          # 如果你想发到 TestPyPI，解开下面这行：
+          # repository-url: https://test.pypi.org/legacy/

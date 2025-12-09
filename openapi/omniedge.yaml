@@ -1,0 +1,38 @@
+openapi: 3.1.0
+info:
+  title: OmniEdge API
+  version: 0.1.0
+  description: 这是一个用于生成 SDK 的 API 定义文档
+servers:
+  - url: "{base_url}"
+    description: Custom Server
+    variables:
+      base_url:
+        default: "https://portal.huamedia.tv/"
+        description: Production Server
+
+components:
+  securitySchemes:
+    api_key:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        使用 Bearer Token 进行认证。
+        初始化客户端时传入 `api_key="sk-..."` 即可。
+
+
+security:
+  - api_key: []
+
+
+paths:
+  /chat/completions:
+   $ref : "./paths/chat.yaml"
+
+  /model:
+     $ref : "./paths/model.yaml"
+
+
+
+  

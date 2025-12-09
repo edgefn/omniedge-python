@@ -1,0 +1,44 @@
+name: test SDK python
+
+on:
+  pull_request:
+    paths:
+        - 'tests/**'           # 测试代码变动时触发
+        - 'src/**'             #SDK 源码变动时触发
+        # - 'pyproject.toml'     #依赖变动时触发
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          # 👇 关键修正：指定子目录路径
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install . 
+          pip install pytest pytest-asyncio
+
+      - name: Run Tests
+        env:
+          SPEAKEASY_API_KEY: ${{ secrets.SPEAKEASY_API_KEY }}
+          BASE_URL: ${{ secrets.OMNIEDGE_BASE_URL }}
+          OMNIEDGE_API_KEY: ${{ secrets.OMNIEDGE_API_KEY }}
+
+        run: |
+          pytest

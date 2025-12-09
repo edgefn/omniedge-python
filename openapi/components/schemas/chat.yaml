@@ -1,0 +1,367 @@
+
+# ----------------------------------------------------------------------
+# 基础组件：工具与函数定义 (Agent 核心)
+# ----------------------------------------------------------------------
+Function:
+  type: object
+  required: [name]
+  properties:
+    name:
+      type: string
+      description: 函数名称
+    description:
+      type: string
+      description: 函数功能描述
+    parameters:
+      type: object
+      description: 函数参数的 JSON Schema
+
+Tool:
+  type: object
+  required: [type, function]
+  properties:
+    type:
+      type: string
+      enum: [function]
+    function:
+      $ref: '#/Function'
+
+
+
+# ----------------------------------------------------------------------
+# 基础组件：多模态内容支持
+# ----------------------------------------------------------------------
+ContentPart:
+  type: object
+  required: [type]
+  properties:
+    type:
+      type: string
+      enum: [text, image_url, audio_url, video_url]
+      description: "内容类型"
+    text:
+      type: string
+      description: "文本内容 (当 type=text 时)"
+    image_url:
+      type: object
+      description: "图像URL信息 (当 type=image_url 时)"
+      properties:
+        url:
+          type: string
+          description: "图像URL"
+        detail:
+          type: string
+          enum: [auto, low, high]
+          default: auto
+          description: "图像细节级别"
+    audio_url:
+      type: object
+      description: "音频URL信息 (当 type=audio_url 时)"
+      properties:
+        url:
+          type: string
+          description: "音频URL"
+        format:
+          type: string
+          description: "音频格式"
+    video_url:
+      type: object
+      description: "视频URL信息 (当 type=video_url 时)"
+      properties:
+        url:
+          type: string
+          description: "视频URL"
+        format:
+          type: string
+          description: "视频格式"
+
+# ----------------------------------------------------------------------
+# 基础组件：消息对象 (升级版，支持 Tool Calls)
+# ----------------------------------------------------------------------
+ChatCompletionMessage:
+  type: object
+  required: [role]
+  properties:
+    role:
+      type: string
+      enum: [system, user, assistant, tool, function]
+    content:
+      oneOf:
+        - type: string
+          description: "文本内容"
+        - type: array # 支持多模态 (图片/文本)
+          items:
+            $ref: '#/ContentPart'
+      nullable: true # 允许为空 (当 tool_calls 存在时)
+    name:
+      type: string
+    # 👇 新增：模型生成的工具调用请求
+    tool_calls:
+      type: array
+      items:
+        type: object
+        properties:
+          id: {type: string}
+          type: {type: string}
+          function:
+            type: object
+            properties:
+              name: {type: string}
+              arguments: {type: string} # JSON 字符串
+    # 👇 新增：Tool 消息对应的调用 ID
+    tool_call_id:
+      type: string
+
+# ----------------------------------------------------------------------
+# 请求对象 (工业级完全体)
+# ----------------------------------------------------------------------
+CreateChatCompletionRequest:
+  type: object
+  required:
+    - model
+    - messages
+  properties:
+    # --- 1. 核心路由 (OpenRouter 风格) ---
+    model:
+      description: |
+        模型 ID。
+        - 字符串: 指定单一模型 (如 "openai/gpt-4o")。
+        - 数组: 开启自动容灾 (如 ["openai/gpt-4o", "anthropic/claude-3"])。
+      oneOf:
+        - type: string
+          example: "openai/gpt-4o"
+        - type: array
+          items: {type: string}
+          minItems: 1
+          example: ["openai/gpt-4o", "google/gemini-pro"]
+
+    messages:
+      type: array
+      items:
+        $ref: '#/ChatCompletionMessage'
+
+    route:
+      type: string
+      enum: [fallback, round_robin, least_latency]
+      default: fallback
+      description: "多模型路由策略 (fallback=顺序容灾, round_robin=负载均衡)"
+
+    provider:
+      type: object
+      description: "上游服务商特定配置 (隐私/参数校验)"
+      properties:
+        require_parameters: {type: boolean}
+        data_collection: {type: string, enum: [deny, allow]}
+        allow_fallbacks: {type: boolean}
+
+    # --- 2. 生成控制 (OpenAI 标准) ---
+    temperature:
+      type: number
+      default: 1.0
+      minimum: 0.0
+      maximum: 2.0
+      description: "采样温度 (0.0=确定性, 2.0=随机性)"
+
+    top_p:
+      type: number
+      default: 1.0
+      description: "核采样 (Nucleus Sampling)，建议与 temperature 二选一"
+
+    n:
+      type: integer
+      default: 1
+      description: "为每条输入生成多少条回复"
+
+    max_tokens:
+      type: integer
+      minimum: 1
+      nullable: true
+      description: "最大生成长度"
+
+    stop:
+      description: "停止序列 (最多 4 个)"
+      oneOf:
+        - type: string
+        - type: array
+          items: {type: string}
+          maxItems: 4
+
+    presence_penalty:
+      type: number
+      default: 0
+      minimum: -2.0
+      maximum: 2.0
+      description: "存在惩罚 (鼓励谈论新话题)"
+
+    frequency_penalty:
+      type: number
+      default: 0
+      minimum: -2.0
+      maximum: 2.0
+      description: "频率惩罚 (减少复读机现象)"
+
+    repetition_penalty:
+      type: number
+      default: 1.0
+      minimum: 0.0
+      maximum: 2.0
+      description: "重复惩罚 (1.0=无惩罚, >1.0=减少重复)"
+
+    top_k:
+      type: integer
+      minimum: 1
+      maximum: 100
+      description: "Top-K采样 (只从概率最高的K个token中选择)"
+
+    logit_bias:
+      type: object
+      description: "调整特定 Token 的生成概率 (Token ID -> Bias Value)"
+      additionalProperties:
+        type: integer
+
+    user:
+      type: string
+      description: "终端用户 ID (用于风控和审计)"
+
+    # --- 3. 高级功能 (格式/工具/流式) ---
+    response_format:
+      type: object
+      description: "强制输出格式 (如 JSON)"
+      properties:
+        type:
+          type: string
+          enum: [text, json_object]
+
+    seed:
+      type: integer
+      nullable: true
+      description: "随机种子 (用于尽力复现结果)"
+
+    tools:
+      type: array
+      description: "模型可用的工具列表"
+      items:
+        $ref: '#/Tool'
+
+    tool_choice:
+      description: "强制模型调用特定工具或自动选择"
+      oneOf:
+        - type: string
+          enum: [none, auto, required]
+        - type: object
+          properties:
+            type: {type: string, enum: [function]}
+            function:
+              type: object
+              properties:
+                name: {type: string}
+
+    # --- 4. 流式响应 ---
+    stream:
+      type: boolean
+      default: false
+      description: "是否启用流式响应"
+
+    stream_options:
+      type: object
+      description: "流式响应选项"
+      properties:
+        include_usage:
+          type: boolean
+          default: false
+          description: "是否在流式响应的最后包含使用量统计"
+
+# ----------------------------------------------------------------------
+# 响应对象 (普通)
+# ----------------------------------------------------------------------
+ChatCompletionResponse:
+  type: object
+  properties:
+    id: {type: string}
+    object: {type: string, enum: [chat.completion]}
+    created: {type: integer}
+    model: {type: string}
+    system_fingerprint: {type: string}
+    choices:
+      type: array
+      items:
+        type: object
+        properties:
+          index: {type: integer}
+          message:
+            $ref: '#/ChatCompletionMessage'
+          finish_reason:
+            type: string
+            enum: [stop, length, tool_calls, content_filter, null]
+            description: "完成原因: stop=自然结束, length=长度限制, tool_calls=工具调用, content_filter=内容过滤"
+    usage:
+      type: object
+      properties:
+        prompt_tokens: {type: integer}
+        completion_tokens: {type: integer}
+        total_tokens: {type: integer}
+
+# ----------------------------------------------------------------------
+# 流式响应对象 (Server-Sent Events)
+# ----------------------------------------------------------------------
+ChatCompletionStreamChunk:
+  type: object
+  properties:
+    id: {type: string}
+    object:  # 改为安全的字段名
+         type: string
+         enum: [ chat.completion.chunk ]
+         x-speakeasy-name-override: "object"
+    created: {type: integer}
+    model: {type: string}
+    system_fingerprint: {type: string}
+    choices:
+      type: array
+      items:
+        type: object
+        properties:
+          index: {type: integer}
+          delta:
+            type: object
+            properties:
+              role: {type: string, enum: [system, user, assistant, tool]}
+              content: {type: string}
+              tool_calls:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    index: {type: integer}
+                    id: {type: string}
+                    type: {type: string}
+                    function:
+                      type: object
+                      properties:
+                        name: {type: string}
+                        arguments: {type: string}
+          finish_reason:
+            type: string
+            enum: [stop, length, tool_calls, content_filter]
+            nullable: true
+    usage:
+      type: object
+      nullable: true
+      properties:
+        prompt_tokens: {type: integer}
+        completion_tokens: {type: integer}
+        total_tokens: {type: integer}
+
+
+# ----------------------------------------------------------------------
+# 2. 新增：SSE 协议包装器 (这就是解决报错的关键！)
+# ----------------------------------------------------------------------
+ChatCompletionStreamEvent:
+  type: object
+  properties:
+    # 告诉 Speakeasy：SSE 的 data 字段内容符合 ChatCompletionStreamChunk 结构
+    data:
+      $ref: '#/ChatCompletionStreamChunk'
+    # 可选：定义 raw bytes 或 string，因为 SSE data 传输的是字符串，
+    # 但 Speakeasy 足够聪明，能处理 JSON schema ref。
+
+

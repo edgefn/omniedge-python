@@ -1,0 +1,191 @@
+get:
+  tags: ["Models"]
+  operationId: listModels
+  summary: 获取可用模型列表
+  description: |
+    获取所有可用的AI模型列表，包括模型详细信息、定价、支持的功能等。
+    支持分页和过滤功能。
+
+  parameters:
+    - name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 100
+      description: "返回模型数量限制"
+
+    - name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: "分页偏移量"
+
+    - name: provider
+      in: query
+      required: false
+      schema:
+        type: string
+      description: "按提供商过滤模型"
+
+    - name: modality
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [text, image, audio, multimodal]
+      description: "按模态类型过滤模型"
+
+  responses:
+    # ✅ 200 OK
+    '200':
+      description: Success
+      headers:
+        X-Request-ID:
+          description: Unique request ID
+          schema: {type: string}
+        X-Total-Count:
+          description: Total number of available models
+          schema: {type: integer}
+        X-RateLimit-Remaining:
+          description: Remaining requests in current window
+          schema: {type: integer}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/model.yaml#/ModelsResponse'
+          example:
+            object: "list"
+            data:
+              - id: "openai/gpt-4o"
+                name: "OpenAI GPT-4o"
+                created: 1715299200
+                description: "OpenAI的多模态旗舰模型，支持文本和图像输入"
+                architecture:
+                  input_modalities: ["text", "image"]
+                  output_modalities: ["text"]
+                  tokenizer: "GPT"
+                  instruct_type: "chat"
+                top_provider:
+                  is_moderated: true
+                  context_length: 128000
+                  max_completion_tokens: 16384
+                pricing:
+                  prompt: "0.000005"
+                  completion: "0.000015"
+                  image: "0"
+                  request: "0"
+                  web_search: "0"
+                  internal_reasoning: "0"
+                  input_cache_read: "0"
+                  input_cache_write: "0"
+                canonical_slug: "gpt-4o"
+                context_length: 128000
+                supported_parameters: ["temperature", "top_p", "max_tokens", "tools", "tool_choice"]
+                default_parameters:
+                  temperature: 0.7
+                  top_p: 0.9
+
+              - id: "anthropic/claude-3-sonnet"
+                name: "Anthropic Claude 3 Sonnet"
+                created: 1708723200
+                description: "Anthropic的平衡型模型，在智能和速度之间取得良好平衡"
+                architecture:
+                  input_modalities: ["text", "image"]
+                  output_modalities: ["text"]
+                  tokenizer: "Claude"
+                  instruct_type: "chat"
+                top_provider:
+                  is_moderated: true
+                  context_length: 200000
+                  max_completion_tokens: 4096
+                pricing:
+                  prompt: "0.000003"
+                  completion: "0.000015"
+                  image: "0"
+                  request: "0"
+                  web_search: "0"
+                  internal_reasoning: "0"
+                  input_cache_read: "0"
+                  input_cache_write: "0"
+                canonical_slug: "claude-3-sonnet"
+                context_length: 200000
+                supported_parameters: ["temperature", "top_p", "max_tokens", "tools", "tool_choice"]
+                default_parameters:
+                  temperature: 0.7
+                  top_p: 0.9
+
+    # ❌ 400 Bad Request
+    '400':
+      description: Bad Request
+      headers:
+        X-Request-ID: {schema: {type: string}}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/BadRequestError'
+
+    # ❌ 401 Unauthorized
+    '401':
+      description: Unauthorized
+      headers:
+        X-Request-ID: {schema: {type: string}}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/AuthenticationError'
+
+    # ❌ 403 Forbidden
+    '403':
+      description: Forbidden
+      headers:
+        X-Request-ID: {schema: {type: string}}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/PermissionDeniedError'
+
+    # ❌ 429 Rate Limit
+    '429':
+      description: Rate Limit Exceeded
+      headers:
+        X-Request-ID: {schema: {type: string}}
+        X-RateLimit-Reset: {schema: {type: integer}}
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/RateLimitError'
+      x-speakeasy-retries:
+        strategy: backoff
+        backoff:
+            initialInterval: 500
+            maxInterval: 60000
+            exponent: 1.5
+        statusCodes: [429, 500, 502, 503, 504]
+
+    # ❌ 5XX Server Errors
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/InternalServerError'
+
+    '502':
+      description: Bad Gateway
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/InternalServerError'
+
+    '503':
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error.yaml#/InternalServerError'

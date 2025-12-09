@@ -1,0 +1,32 @@
+# 工作流配置文件版本（当前 Speakeasy Workflow 的 schema 版本）
+workflowVersion: 1.0.0
+
+# 指定使用的 Speakeasy CLI 版本
+# "latest" 表示始终使用最新稳定版（也可指定具体版本，如 "v1.300.0"）
+speakeasyVersion: v1.665.0
+
+# 定义 API 规范的输入源（可有多个，此处定义一个名为 my-source 的源）
+sources:
+  my-source:
+    # inputs 是一个列表，支持多个 OpenAPI 文件（用于合并场景）
+    inputs:
+      # location: 指向本地 OpenAPI 规范文件的相对路径
+      # 此处表示从当前工作目录下的 ./openapi/omniedge.yaml 读取 API 定义
+      - location: ./openapi/omniedge.yaml
+
+# 定义生成目标（即要为哪些语言生成 SDK）
+targets:
+  # 目标名称：my-python-sdk（可自定义，用于标识该生成任务）
+  my-python-sdk:
+    # target: 指定目标语言（支持 python, go, typescript, java 等）
+    target: python
+    # source: 引用上面定义的 sources 中的名称（必须匹配）
+    source: my-source
+    # output: 指定生成的 SDK 输出目录（相对于当前工作目录）
+    # 此处 "." 表示直接输出到当前目录（通常用于单语言项目）
+    # 注意：若同时生成多语言，建议输出到子目录如 ./sdk/python/
+    output: ./
+    # config: 指向 SDK 生成配置文件（即 gen.yaml）
+    # 该文件控制命名、测试、错误处理等细节（必须存在）
+    # 路径是相对于当前工作目录的
+    config: ./gen.yaml
