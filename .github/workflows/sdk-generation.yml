@@ -51,13 +51,13 @@ jobs:
           # 强制使用 PR 模式 (生成代码后提 PR，而不是直接推送到 main)
           mode: pr
 
-        secrets:
-          # 左边是固定的小写参数名 (对方规定的)
-          # 右边是你仓库里的 Secret (你存的)
+          secrets:
+            # 左边是固定的小写参数名 (对方规定的)
+            # 右边是你仓库里的 Secret (你存的)
 
-          # 如果你只是生成代码，用 GITHUB_TOKEN
-    #      github_access_token: ${{ secrets.GITHUB_TOKEN }}
-          # 如果你想让生成的 PR 自动触发测试，建议换成 ${{ secrets.MY_PAT_TOKEN }}
+            # 如果你只是生成代码，用 GITHUB_TOKEN
+      #      github_access_token: ${{ secrets.GITHUB_TOKEN }}
+            # 如果你想让生成的 PR 自动触发测试，建议换成 ${{ secrets.MY_PAT_TOKEN }}
 
           github_access_token: ${{ secrets.MY_PAT_TOKEN}}
           speakeasy_api_key: ${{ secrets.SPEAKEASY_API_KEY }}
